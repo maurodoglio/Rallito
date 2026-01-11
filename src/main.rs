@@ -74,7 +74,7 @@ async fn main() {
         .init();
 
     // Setup database
-    let db = SqlitePool::connect("sqlite:rallito.db")
+    let db = SqlitePool::connect("sqlite://rallito.db?mode=rwc")
         .await
         .expect("Failed to connect to database");
 
@@ -193,6 +193,11 @@ async fn create_game(
     State(state): State<AppState>,
     Json(new_game): Json<NewGame>,
 ) -> Result<Json<Game>, StatusCode> {
+    // Validate scores are not equal
+    if new_game.team1_score == new_game.team2_score {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
     // Insert the game
     let result = sqlx::query(
         r#"
