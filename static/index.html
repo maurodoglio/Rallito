@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rallito - Padel Game Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .game-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .team-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .team-section h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .rank {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .rank-1 { color: #FFD700; }
+        .rank-2 { color: #C0C0C0; }
+        .rank-3 { color: #CD7F32; }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .games-list {
+            margin-top: 20px;
+        }
+
+        .game-card {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .game-card .winner {
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .game-card .score {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .game-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎾 Rallito</h1>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('leaderboard')">Leaderboard</button>
+            <button class="tab" onclick="showTab('record-game')">Record Game</button>
+            <button class="tab" onclick="showTab('players')">Players</button>
+            <button class="tab" onclick="showTab('games')">Game History</button>
+        </div>
+
+        <!-- Leaderboard Tab -->
+        <div id="leaderboard" class="tab-content active">
+            <h2>🏆 Leaderboard</h2>
+            <div id="leaderboard-message"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Player</th>
+                        <th>Points</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Win Rate</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Record Game Tab -->
+        <div id="record-game" class="tab-content">
+            <h2>📝 Record New Game</h2>
+            <div id="game-message"></div>
+            <form id="game-form" class="game-form">
+                <div class="team-section">
+                    <h3>Team 1</h3>
+                    <div class="form-group">
+                        <label for="team1-player1">Player 1</label>
+                        <select id="team1-player1" required>
+                            <option value="">Select player...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="team1-player2">Player 2</label>
+                        <select id="team1-player2" required>
+                            <option value="">Select player...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="team1-score">Score</label>
+                        <input type="number" id="team1-score" min="0" required>
+                    </div>
+                </div>
+
+                <div class="team-section">
+                    <h3>Team 2</h3>
+                    <div class="form-group">
+                        <label for="team2-player1">Player 1</label>
+                        <select id="team2-player1" required>
+                            <option value="">Select player...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="team2-player2">Player 2</label>
+                        <select id="team2-player2" required>
+                            <option value="">Select player...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="team2-score">Score</label>
+                        <input type="number" id="team2-score" min="0" required>
+                    </div>
+                </div>
+
+                <button type="submit" style="grid-column: 1 / -1;">Submit Game</button>
+            </form>
+        </div>
+
+        <!-- Players Tab -->
+        <div id="players" class="tab-content">
+            <h2>👥 Players</h2>
+            <div id="player-message"></div>
+            
+            <form id="player-form" style="margin-bottom: 30px;">
+                <div class="form-group">
+                    <label for="player-name">Add New Player</label>
+                    <input type="text" id="player-name" placeholder="Enter player name" required>
+                </div>
+                <button type="submit">Add Player</button>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="players-body">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Games Tab -->
+        <div id="games" class="tab-content">
+            <h2>📊 Game History</h2>
+            <div id="games-list" class="games-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let players = [];
+
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            // Load data when switching tabs
+            if (tabName === 'leaderboard') loadLeaderboard();
+            if (tabName === 'players') loadPlayers();
+            if (tabName === 'games') loadGames();
+            if (tabName === 'record-game') {
+                loadPlayers();
+                populatePlayerSelects();
+            }
+        }
+
+        // Load leaderboard
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const data = await response.json();
+                
+                const tbody = document.getElementById('leaderboard-body');
+                tbody.innerHTML = '';
+                
+                data.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    const rank = index + 1;
+                    const rankClass = rank <= 3 ? `rank-${rank}` : 'rank';
+                    
+                    row.innerHTML = `
+                        <td class="${rankClass}">#${rank}</td>
+                        <td>${entry.name}</td>
+                        <td>${entry.points}</td>
+                        <td>${entry.wins}</td>
+                        <td>${entry.losses}</td>
+                        <td>${entry.win_rate.toFixed(1)}%</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                showMessage('leaderboard-message', 'Failed to load leaderboard', 'error');
+            }
+        }
+
+        // Load players
+        async function loadPlayers() {
+            try {
+                const response = await fetch('/api/players');
+                players = await response.json();
+                
+                const tbody = document.getElementById('players-body');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    
+                    players.forEach(player => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${player.name}</td>
+                            <td>${player.wins}</td>
+                            <td>${player.losses}</td>
+                            <td>${player.points}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                showMessage('player-message', 'Failed to load players', 'error');
+            }
+        }
+
+        // Populate player select dropdowns
+        function populatePlayerSelects() {
+            const selects = ['team1-player1', 'team1-player2', 'team2-player1', 'team2-player2'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Select player...</option>';
+                
+                players.forEach(player => {
+                    const option = document.createElement('option');
+                    option.value = player.id;
+                    option.textContent = player.name;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // Add new player
+        document.getElementById('player-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('player-name').value;
+            
+            try {
+                const response = await fetch('/api/players', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (response.ok) {
+                    showMessage('player-message', `Player "${name}" added successfully!`, 'success');
+                    document.getElementById('player-form').reset();
+                    loadPlayers();
+                } else {
+                    showMessage('player-message', 'Failed to add player. Name might already exist.', 'error');
+                }
+            } catch (error) {
+                showMessage('player-message', 'Failed to add player', 'error');
+            }
+        });
+
+        // Record game
+        document.getElementById('game-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const gameData = {
+                team1_player1_id: parseInt(document.getElementById('team1-player1').value),
+                team1_player2_id: parseInt(document.getElementById('team1-player2').value),
+                team2_player1_id: parseInt(document.getElementById('team2-player1').value),
+                team2_player2_id: parseInt(document.getElementById('team2-player2').value),
+                team1_score: parseInt(document.getElementById('team1-score').value),
+                team2_score: parseInt(document.getElementById('team2-score').value)
+            };
+
+            // Validate all players are different
+            const playerIds = [
+                gameData.team1_player1_id,
+                gameData.team1_player2_id,
+                gameData.team2_player1_id,
+                gameData.team2_player2_id
+            ];
+            
+            if (new Set(playerIds).size !== 4) {
+                showMessage('game-message', 'All players must be different!', 'error');
+                return;
+            }
+
+            // Validate scores are not equal
+            if (gameData.team1_score === gameData.team2_score) {
+                showMessage('game-message', 'Scores cannot be tied! There must be a winner.', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(gameData)
+                });
+                
+                if (response.ok) {
+                    showMessage('game-message', 'Game recorded successfully!', 'success');
+                    document.getElementById('game-form').reset();
+                } else {
+                    showMessage('game-message', 'Failed to record game', 'error');
+                }
+            } catch (error) {
+                showMessage('game-message', 'Failed to record game', 'error');
+            }
+        });
+
+        // Load games
+        async function loadGames() {
+            try {
+                const response = await fetch('/api/games');
+                const games = await response.json();
+                
+                const gamesListDiv = document.getElementById('games-list');
+                gamesListDiv.innerHTML = '';
+                
+                if (games.length === 0) {
+                    gamesListDiv.innerHTML = '<p>No games recorded yet.</p>';
+                    return;
+                }
+
+                for (const game of games) {
+                    // Fetch player names with error handling
+                    try {
+                        const [p1, p2, p3, p4] = await Promise.all([
+                            fetch(`/api/players/${game.team1_player1_id}`).then(r => {
+                                if (!r.ok) throw new Error('Player not found');
+                                return r.json();
+                            }),
+                            fetch(`/api/players/${game.team1_player2_id}`).then(r => {
+                                if (!r.ok) throw new Error('Player not found');
+                                return r.json();
+                            }),
+                            fetch(`/api/players/${game.team2_player1_id}`).then(r => {
+                                if (!r.ok) throw new Error('Player not found');
+                                return r.json();
+                            }),
+                            fetch(`/api/players/${game.team2_player2_id}`).then(r => {
+                                if (!r.ok) throw new Error('Player not found');
+                                return r.json();
+                            })
+                        ]);
+
+                        const winner = game.team1_score > game.team2_score ? 'Team 1' : 'Team 2';
+                        const winnerClass = game.team1_score > game.team2_score ? 'winner' : '';
+
+                        const gameCard = document.createElement('div');
+                        gameCard.className = 'game-card';
+                        gameCard.innerHTML = `
+                            <div>
+                                <strong ${game.team1_score > game.team2_score ? 'class="winner"' : ''}>
+                                    Team 1: ${p1.name} & ${p2.name}
+                                </strong>
+                                <span class="score">${game.team1_score}</span>
+                            </div>
+                            <div>
+                                <strong ${game.team2_score > game.team1_score ? 'class="winner"' : ''}>
+                                    Team 2: ${p3.name} & ${p4.name}
+                                </strong>
+                                <span class="score">${game.team2_score}</span>
+                            </div>
+                            <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                                ${new Date(game.created_at).toLocaleString()}
+                            </div>
+                        `;
+                        gamesListDiv.appendChild(gameCard);
+                    } catch (error) {
+                        console.error('Failed to load player data for game:', error);
+                        const gameCard = document.createElement('div');
+                        gameCard.className = 'game-card';
+                        gameCard.innerHTML = `
+                            <div>Game #${game.id} - Score: ${game.team1_score} - ${game.team2_score}</div>
+                            <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                                ${new Date(game.created_at).toLocaleString()}
+                            </div>
+                        `;
+                        gamesListDiv.appendChild(gameCard);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load games:', error);
+            }
+        }
+
+        // Show message
+        function showMessage(elementId, message, type) {
+            const messageDiv = document.getElementById(elementId);
+            messageDiv.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        // Load leaderboard on page load
+        loadLeaderboard();
+    </script>
+</body>
+</html>
